@@ -143,6 +143,37 @@ public class Scanner {
                     // A comment goes until the end of the line.
                     while (peek() != '\n' && !isAtEnd())
                         advance();
+                } else if (match('*')) {
+                    // TODO: add support for multiline comments with nesting
+                    int nestingLevel = 1; // Start with the initial block comment
+
+                    while (!isAtEnd()) {
+                        if (peek() == '/' && peekNext() == '*') {
+                            // Found a nested block comment: Increment nesting level
+                            advance(); // Consume '/'
+                            advance(); // Consume '*'
+                            nestingLevel++;
+                        } else if (peek() == '*' && peekNext() == '/') {
+                            // Found the end of a block comment: Decrement nesting level
+                            advance(); // Consume '*'
+                            advance(); // Consume '/'
+                            nestingLevel--;
+
+                            if (nestingLevel == 0)
+                                return; // Exit when all comments are closed
+                        } else if (peek() == '\n') {
+                            // Handle newlines to keep track of the line number
+                            line++;
+                        }
+
+                        advance(); // Consume the current character
+                    }
+
+                    // If we reach the end of the file without closing all block comments
+                    if (nestingLevel > 0) {
+                        Lox.error(line, "Unterminated block comment.");
+                    }
+
                 } else {
                     addToken(SLASH);
                 }
